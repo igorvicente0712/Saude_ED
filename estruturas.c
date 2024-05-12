@@ -2,270 +2,282 @@
 #include <stdlib.h>
 #include <string.h>
 #include "estruturas.h"
+#include "auxiliares.h"
 
 // Registro
-
-/*
 
 // ----------------
 // |    Lista     |
 // ----------------
-LDE *cria_LDE() {
-    LDE *lde = malloc(sizeof(LDE));
-    lde->primeiro = NULL;
+
+// Cria uma lista onde serao colocados os dados dos pacientes
+Lista *criaLista() {
+    Lista *lde = malloc(sizeof(Lista));
+    lde->inicio = NULL;
     lde->qtde = 0;
     return lde;
 }
 
-Celula *cria_Celula(int valor) {
-    Celula *celula = malloc(sizeof(Celula));
+// Cria uma ELista onde estarao os dados de registro dos pacientes
+ELista *criaELista(Registro reg) {
+    ELista *celula = malloc(sizeof(ELista));
     celula->proximo = NULL;
-    celula->valor = valor;
+    celula->dados = reg;
     return celula;
 }
 
-void inserir(LDE *lde, int valor) {
-    Celula *novo = cria_Celula(valor);
-    if (lde->primeiro == NULL) {
-        lde->primeiro = novo;
-        lde->qtde++;
+// Adiciona os dados do paciente numa lista
+void insereLista(Lista *lde, Registro reg) {
+    // So vai colocando um na frente do outro, entao nao coloca de forma ordenada
+    ELista *novo = criaELista(reg);
+    if (lde->inicio == NULL) {
+        lde->inicio = novo;
     }
     else {
-        Celula *atual = lde->primeiro;
-        Celula *anterior = NULL;
-        while (atual != NULL && atual->valor <= valor) {
+        ELista *atual = lde->inicio;
+        ELista *anterior = NULL;
+        while (atual != NULL) {
             anterior = atual;
             atual = atual->proximo;
         }
-        if (anterior == NULL && atual != NULL) {
-            novo->proximo = atual;
-            lde->primeiro = novo;
-            lde->qtde++;
-        }
         if (anterior != NULL && atual == NULL) {
             anterior->proximo = novo;
-            lde->qtde++;
-        }
-        if (anterior != NULL && atual != NULL) {
-            anterior->proximo = novo;
-            novo->proximo = atual;
-            lde->qtde++;
         }
     }
+    lde->qtde++;
 }
 
-void remove_valor(LDE *lde, int valor) {
-    if (lde->qtde == 0) {
-        return;
+// Remove os dados de um paciente de uma lista baseado no seu RG
+int removeLista(Lista *lde, char *rg) {
+    if (lde->qtde == 0) { // Se estiver sem paciente, nao faz nada
+        return 0;
     }
-    Celula *atual = lde->primeiro;
-    Celula *anterior = NULL;
+    ELista *atual = lde->inicio;
+    ELista *anterior = NULL;
     while (atual != NULL) {
-        if (atual->valor == valor) {
-            if (anterior == NULL) {
-                lde->primeiro = atual->proximo;
+        if (strcmp(atual->dados.rg, rg) == 0) { // Se encontrar o RG, remove
+            if (anterior == NULL) { // Caso seja o primeiro item
+                lde->inicio = atual->proximo;
             }
             else {
                 anterior->proximo = atual->proximo;
             }
             lde->qtde--;
             free(atual);
-            return;
+            return 1;
         }
         anterior = atual;
         atual = atual->proximo;
     }
-    return;
+    return 0;
 }
 
-void mostrar(LDE *lde) {
-    Celula *atual = lde->primeiro;
+// Reseta a lista para manter o ponteiro original
+void resetaLista(Lista *lde) {
+    if (lde->qtde == 0) {
+        return;
+    }
+    ELista *atual = lde->inicio;
+    ELista *proximo = NULL;
     while (atual != NULL) {
-        printf("%d",  atual->valor);
+        proximo = atual->proximo;
+        free(atual);
+        atual = proximo;
+    }
+    lde->inicio = NULL;
+    lde->qtde = 0;
+}
+
+// Mostra os dados de todos os pacientes dentro de uma lista
+void mostraLista(Lista *lde) {
+    if (lde->qtde == 0) {
+        printf("Nao ha pacientes cadastrados.\n");
+        return;
+    }
+    ELista *atual = lde->inicio;
+    while (atual != NULL) {
+        printf("Nome: %s | Idade: %d | RG: %s | Entrada: %02d/%02d/%d\n",  atual->dados.nome, atual->dados.idade, atual->dados.rg, atual->dados.entrada.dia, atual->dados.entrada.mes, atual->dados.entrada.ano);
         atual = atual->proximo;
     }
-    printf("\n");
+    //printf("\n");
 }
+
 
 // ----------------
 // |     Fila     |
 // ----------------
-Fila *cria_queue() {
-  Fila *f = malloc(sizeof(Fila));
-  f->head = 0;
-  f->tail = 0;
-  f->qtd = 0;
-  return f;
+
+Fila *criaFila() {
+    Fila *f = malloc(sizeof(Fila));
+    f->head = NULL;
+    f->tail = NULL;
+    f->qtde = 0;
+    return f;
 }
 
-int is_full(Fila *f) {
-  return f->qtd == CAP;
+EFila *criaEFila(Registro reg) {
+    EFila *ef = malloc(sizeof(EFila));
+    ef->dados = reg;
+    ef->proximo = NULL;
+    return ef;
 }
 
-int enqueue(Fila *f, int valor) {
-  if (is_full(f)) {
-    return 0;
-  }
-  f->valores[f->tail % CAP] = valor;
-  f->tail++;
-  f->qtd++;
-  return 1;
+void enfileira(Fila *f, EFila *ef) {
+    if (f->head == NULL) {
+        f->head = ef;
+    }
+    else {
+        f->tail->proximo = ef;
+    }
+    f->tail = ef;
+    f->qtde++;
+    printf("Paciente enfileirado com sucesso!\n");
+    return;
 }
 
-void show(Fila *f) {
-  for (int i = f->head; i < f->tail; i++) {
-    printf("%d ", f->valores[i % CAP]);
-  }
-  printf("\n");
+void desenfileira(Fila *f) {
+    if (f->head == NULL) {
+        printf("Fila vazia!\n");
+        return;
+    }
+    EFila *atual = f->head;
+    f->head = f->head->proximo;
+    if (f->head == NULL) { // Se o proximo da head for null, so tem ele
+        f->tail = NULL;
+    }
+    free(atual);
+    f->qtde--;
+    printf("Paciente desenfileirado com sucesso!\n");
+    return;
 }
 
-int is_empty(Fila *f) {
-  return f->head == f->tail;
-}
-
-int dequeue(Fila *f) {
-  if (is_empty(f)) {
-    return -1;
-  }
-  int valor = f->valores[f->head % CAP];
-  f->head++;
-  f->qtd--;
-  return valor;
+void mostraFila(Fila *f) {
+    int i = 1;
+    EFila *atual = f->head;
+    if (f->head == NULL) {
+        printf("Fila vazia!\n");
+        return;
+    }
+    while (atual != NULL) {
+        printf("%d: Paciente %s\n", i, atual->dados.nome);
+        i++;
+        atual = atual->proximo;
+    }
+    printf("\n");
+    return;
 }
 
 
 // ----------------
 // |     ABB      |
 // ----------------
-void in_ordem(Vertice * raiz) {
-  if (raiz != NULL) {
-    in_ordem(raiz->esq);
-    printf("%d ", raiz->valor);
-    in_ordem(raiz->dir);
-  }
-}
 
-  void pre_ordem(Vertice * raiz) {
+void ordenaEABB(EABB *raiz) {
     if (raiz != NULL) {
-      printf("%d ", raiz->valor);
-      pre_ordem(raiz->esq);
-      pre_ordem(raiz->dir);
+        ordenaEABB(raiz->fEsq);
+        printf("Nome: %s | Idade: %d | RG: %s | Entrada: %02d/%02d/%d\n",  raiz->dados.nome, raiz->dados.idade, raiz->dados.rg, raiz->dados.entrada.dia, raiz->dados.entrada.mes, raiz->dados.entrada.ano);
+        ordenaEABB(raiz->fDir);
     }
-  }
-
-  void pos_ordem(Vertice * raiz) {
-    if (raiz != NULL) {
-      pos_ordem(raiz->esq);
-      pos_ordem(raiz->dir);
-      printf("%d ", raiz->valor);
-    }
-  }
-
-Vertice *cria_vertice(int valor){
-  Vertice* novo = malloc(sizeof(Vertice));
-  novo->dir = NULL;
-  novo->esq = NULL;
-  novo->pai = NULL;
-  novo->valor = valor;
-
-  return novo;
 }
 
-Arvore *cria_arvore(){
-  Arvore* arvore = malloc(sizeof(Arvore));
-  arvore->raiz = NULL;
-  arvore->qtde = 0;
-
-  return arvore;
+EABB *criaEABB(Registro reg) {
+    EABB* novo = malloc(sizeof(EABB));
+    novo->fDir = NULL;
+    novo->fEsq = NULL;
+    novo->dados = reg;
+    return novo;
 }
 
-void inserir(Arvore* arvore, int valor){ 
-  Vertice *novo = cria_vertice(valor);
-  if (arvore->qtde == 0) {
-    arvore->raiz = novo;
+ABB *criaABB() {
+    ABB* arvore = malloc(sizeof(ABB));
+    arvore->raiz = NULL;
+    arvore->qtde = 0;
+    return arvore;
+}
+
+void inserePaciente(ABB *arvore, Registro reg, int tipoOrdenacao) {
+    // Tipo ordenacao:
+    // 0 -> ano
+    // 1 -> mes
+    // 2 -> dia
+    // 3 -> idade
+    EABB *novo = criaEABB(reg);
+    if (arvore->qtde == 0) {
+        arvore->raiz = novo;
+        arvore->qtde++;
+        return;
+    }
+    EABB *atual = arvore->raiz;
+    EABB *anterior = NULL;
+    switch (tipoOrdenacao) {
+        case 0:
+            while (atual != NULL) {
+                anterior = atual;
+                if (atual->dados.entrada.ano > novo->dados.entrada.ano) {
+                    atual = atual->fEsq;
+                }
+                else {
+                    atual = atual->fDir;
+                }
+            }
+            if (anterior->dados.entrada.ano > novo->dados.entrada.ano) {
+                anterior->fEsq = novo;
+            }
+            else {
+                anterior->fDir = novo;
+            }
+            break;
+        case 1:
+            while (atual != NULL) {
+                anterior = atual;
+                if (atual->dados.entrada.mes > novo->dados.entrada.mes) {
+                    atual = atual->fEsq;
+                }
+                else {
+                    atual = atual->fDir;
+                }
+            }
+            if (anterior->dados.entrada.mes > novo->dados.entrada.mes) {
+                anterior->fEsq = novo;
+            }
+            else {
+                anterior->fDir = novo;
+            }
+            break;
+        case 2:
+            while (atual != NULL) {
+                anterior = atual;
+                if (atual->dados.entrada.dia > novo->dados.entrada.dia) {
+                    atual = atual->fEsq;
+                }
+                else {
+                    atual = atual->fDir;
+                }
+            }
+            if (anterior->dados.entrada.dia > novo->dados.entrada.dia) {
+                anterior->fEsq = novo;
+            }
+            else {
+                anterior->fDir = novo;
+            }
+            break;
+        case 3:
+            while (atual != NULL) {
+                anterior = atual;
+                if (atual->dados.idade > novo->dados.idade) {
+                    atual = atual->fEsq;
+                }
+                else {
+                    atual = atual->fDir;
+                }
+            }
+            if (anterior->dados.idade > novo->dados.idade) {
+                anterior->fEsq = novo;
+            }
+            else {
+                anterior->fDir = novo;
+            }
+            break;
+    }
     arvore->qtde++;
-    return;
-  }
-  Vertice *atual = arvore->raiz;
-  Vertice *anterior = NULL; 
-  while (atual != NULL) {
-    anterior = atual;
-    if (atual->valor > novo->valor) {
-      atual = atual->esq;
-    }
-    else {
-      atual = atual->dir;
-    }
-  }
-  novo->pai = anterior;
-  if (anterior->valor > novo->valor) {
-    anterior->esq = novo;
-  }
-  else {
-    anterior->dir = novo;
-  }
-  arvore->qtde++;
 }
-
-int remover_vertice(Arvore *arvore, Vertice *vertice) {
-  if (vertice == NULL) {
-      return 0; 
-  }
-  if (vertice->esq == NULL && vertice->dir == NULL) { // n tem filho
-    if (vertice->pai != NULL) {
-      if (vertice == vertice->pai->esq) {
-        vertice->pai->esq = NULL;
-      } else {
-        vertice->pai->dir = NULL;
-      }
-    } else {
-      arvore->raiz = NULL;
-    }
-    free(vertice);
-  } else if (vertice->esq == NULL || vertice->dir == NULL) {
-    Vertice *filho = (vertice->esq != NULL) ? vertice->esq : vertice->dir;
-    if (vertice->pai != NULL) {
-      if (vertice == vertice->pai->esq) {
-        vertice->pai->esq = filho;
-      } else {
-        vertice->pai->dir = filho;
-      }
-    } else {
-      arvore->raiz = filho;
-    }
-
-    filho->pai = vertice->pai;
-    free(vertice);
-  } else {  
-    Vertice* maior_na_esq = vertice->esq;
-    while (maior_na_esq->dir != NULL) {
-        maior_na_esq = maior_na_esq->dir;
-    }
-
-    int temp = vertice->valor;
-    vertice->valor = maior_na_esq->valor;
-    maior_na_esq->valor = temp;
-
-    remover_vertice(arvore, maior_na_esq);
-  }
-  arvore->qtde--;
-  return 1;
-}
-
-Vertice *buscar_valor(Arvore* arvore, int valor){
-  Vertice* atual = arvore->raiz;
-  while(atual != NULL){
-    if(valor < atual->valor){
-      atual = atual->esq;
-    }else{
-      if(valor > atual->valor){
-        atual = atual->dir;
-      }else{
-        return atual;
-      }
-    }
-  }
-  return NULL;
-}
-
-*/

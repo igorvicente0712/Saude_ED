@@ -1,31 +1,37 @@
 #ifndef OPERACOES
 #define OPERACOES
-/*
-void novoCliente();
+#include "estruturas.h"
 
-void apagaCliente();
+// Cadastrar
+void novoPaciente(Lista *registros);
 
-void debito();
+void consultaCadastrado(Lista *registros);
 
-void deposito();
+void attDados(Lista *registros);
 
-void extrato();
+void removerPaciente(Lista *registros);
 
-void transferenciaEntreContas();
+void cadastrar(Lista *registros);
 
-void poupanca();
+void placeholderAtendimento(Lista *registros); // Horrivel mas precisei fazer isso para
+// manter a estrutura de array com ponteiro das funcoes para evitar ficar colocando
+// Switch Case
 
-void listaClientes();
-*/
+// Atendimento
+void enfileiraPaciente(Lista *registros, Fila *fila);
 
-void cadastrar();
+void atendimento(Lista *registros, Fila *fila);
 
-void atendimento();
+// Pesquisa
+void pesquisa(Lista *registros);
 
-void pesquisa();
+// Carregar / Salvar
+void salva(Lista *registros);
 
-void carrega_salva();
+void carrega(Lista *registros);
 
-void sobre();
+void carrega_salva(Lista *registros);
+
+void sobre(Lista *registros);
 
 #endif
